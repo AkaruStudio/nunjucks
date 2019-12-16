@@ -193,6 +193,12 @@ use the simple [`configure`](#configure) API, nunjucks automatically
 creates the appropriate loader for you, depending if you're in node or
 the browser. See [`Loader`](#loader) for more information.
 
+Also only in node, [`NodeResolveLoader`](#noderesolveloader) is
+provided to allow templates to be included using
+[node `require` resolution](https://nodejs.org/api/modules.html#modules_all_together).
+This is not enabled by default with [`configure`](#configure), it must be
+explicitly passed into the `Environment` constructor.
+
 ```js
 // the FileSystemLoader is available if in node
 var env = new nunjucks.Environment(new nunjucks.FileSystemLoader('views'));
@@ -353,6 +359,23 @@ SafeString (to be documented) if one was passed in, so the output will
 copy the safeness of the input, but this property is helpful in rare
 circumstances.
 {% endapi %}
+
+{% api %}
+'load' event
+env.on('load', function(name, source, loader))
+
+The 'load' event gets emitted whenever a Loader retrieves the source of a
+template. It can be listened to in order to determine template dependencies
+at runtime. The arguments emitted to the callback are:
+
+* **name** *(String)* The template name, as passed to the loader
+* **source** *(Object)* The object that gets returned from Loader.getSource
+  * **src** *(String)* The template source
+  * **path** *(String)* The full path to the template
+  * **noCache** *(Bool)* If `true`, the template wasn't cached.
+* **loader** The Loader instance that triggered the event.
+{% endapi %}
+
 {% raw %}
 
 ## Template
@@ -424,6 +447,18 @@ templates live, and it defaults to the current working directory.
 var env = new nunjucks.Environment(new nunjucks.FileSystemLoader('views'));
 ```
 
+{% endapi %}
+
+{% api %}
+NodeResolveLoader
+new NodeResolveLoader([opts])
+
+As the name suggests, this is also only available in node. It will load
+templates from the filesystem using node's
+[`require.resolve`](https://nodejs.org/api/modules.html#modules_all_together).
+
+**opts** is an object which takes the same properties as
+[`FileSystemLoader`](#filesystemloader).
 {% endapi %}
 
 {% api %}

@@ -795,6 +795,14 @@
     });
 
     if (!isSlim) {
+      it('should throw exceptions when called synchronously', function() {
+        var tmpl = new Template('{% from "doesnotexist" import foo %}');
+        function templateRender() {
+          tmpl.render();
+        }
+        expect(templateRender).to.throwException(/template not found: doesnotexist/);
+      });
+
       it('should include error line in raised TemplateError', function(done) {
         var tmplStr = [
           '{% set items = ["a", "b",, "c"] %}',
@@ -808,8 +816,31 @@
         tmpl.render({}, function(err, res) {
           expect(res).to.be(undefined);
           expect(err.toString()).to.be([
-            'Template render error: (parse-error.njk) [Line 1, Column 24]',
+            'Template render error: (parse-error.njk) [Line 1, Column 26]',
             '  unexpected token: ,',
+          ].join('\n'));
+          done();
+        });
+      });
+
+      it('should include error line when exception raised in user function', function(done) {
+        var tmplStr = [
+          '{% block content %}',
+          '<div>{{ foo() }}</div>',
+          '{% endblock %}',
+        ].join('\n');
+        var env = new Environment(new Loader('tests/templates'));
+        var tmpl = new Template(tmplStr, env, 'user-error.njk');
+
+        function foo() {
+          throw new Error('ERROR');
+        }
+
+        tmpl.render({foo: foo}, function(err, res) {
+          expect(res).to.be(undefined);
+          expect(err.toString()).to.be([
+            'Template render error: (user-error.njk) [Line 1, Column 11]',
+            '  Error: ERROR',
           ].join('\n'));
           done();
         });

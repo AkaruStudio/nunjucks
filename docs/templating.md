@@ -43,6 +43,7 @@ Plugins are available in various editors to support the `jinja` syntax highlight
 * brackets <https://github.com/axelboc/nunjucks-brackets>
 * sublime <https://github.com/mogga/sublime-nunjucks/blob/master/Nunjucks.tmLanguage>
 * emacs <http://web-mode.org>
+* vscode <https://github.com/ronnidc/vscode-nunjucks>
 
 ## Variables
 
@@ -253,7 +254,7 @@ The [`dictsort`](http://jinja.pocoo.org/docs/templates/#dictsort) filter is
 available for sorting objects when iterating over them.
 
 ES iterators are supported, like the new builtin Map and Set. But also
-anything implementing the iterator protocal.
+anything implementing the iterable protocol.
 
 ```js
 var fruits = new Map([
@@ -935,8 +936,9 @@ Return a list of lists with the given number of items:
 
 ```jinja
 {% set items = [1,2,3,4,5,6] %}
+{% set dash = joiner("-") %}
 {% for item in items | batch(2) %}
-    -{% for items in item %}
+    {{ dash() }} {% for items in item %}
        {{ items }}
     {% endfor %}
 {% endfor %}
@@ -1445,13 +1447,13 @@ and replacing them surrounding an item:
 
 ```jinja
 {% set letters = aaabbbccc%}
-{{ "letters" | replace("", ".") }}
+{{ letters | replace("", ".") }}
 ```
 
 **Output**
 
 ```jinja
-.l.e.t.t.e.r.s.
+.a.a.a.b.b.b.c.c.c.
 
 ```
 

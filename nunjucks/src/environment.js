@@ -8,7 +8,7 @@ const filters = require('./filters');
 const {FileSystemLoader, WebLoader, PrecompiledLoader} = require('./loaders');
 const tests = require('./tests');
 const globals = require('./globals');
-const Obj = require('./object');
+const {Obj, EmitterObj} = require('./object');
 const globalRuntime = require('./runtime');
 const {handleError, Frame} = globalRuntime;
 const expressApp = require('./express-app');
@@ -37,7 +37,7 @@ const noopTmplSrc = {
   }
 };
 
-class Environment extends Obj {
+class Environment extends EmitterObj {
   init(loaders, opts) {
     // The dev flag determines the trace that'll be shown on errors.
     // If set to true, returns the full trace from the error point,
@@ -82,7 +82,7 @@ class Environment extends Obj {
       );
     }
 
-    this.initCache();
+    this._initLoaders();
 
     this.globals = globals();
     this.filters = {};
@@ -95,15 +95,25 @@ class Environment extends Obj {
     lib._entries(tests).forEach(([name, test]) => this.addTest(name, test));
   }
 
-  initCache() {
-    // Caching and cache busting
+  _initLoaders() {
     this.loaders.forEach((loader) => {
+      // Caching and cache busting
       loader.cache = {};
       if (typeof loader.on === 'function') {
-        loader.on('update', (template) => {
-          loader.cache[template] = null;
+        loader.on('update', (name, fullname) => {
+          loader.cache[name] = null;
+          this.emit('update', name, fullname, loader);
+        });
+        loader.on('load', (name, source) => {
+          this.emit('load', name, source, loader);
         });
       }
+    });
+  }
+
+  invalidateCache() {
+    this.loaders.forEach((loader) => {
+      loader.cache = {};
     });
   }
 
@@ -475,7 +485,11 @@ class Template extends Obj {
     this.rootRenderFunc(this.env, context, frame, globalRuntime, (err, res) => {
       if (didError) {
         // prevent multiple calls to cb
-        return;
+        if (cb) {
+          return;
+        } else {
+          throw err;
+        }
       }
       if (err) {
         err = lib._prettifyError(this.path, this.env.opts.dev, err);
