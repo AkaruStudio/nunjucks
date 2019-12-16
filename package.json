@@ -79,7 +79,7 @@
   "bin": {
     "nunjucks-precompile": "./bin/precompile"
   },
-  "main": "index",
+  "main": "./browser/nunjucks.js",
   "nyc": {
     "require": [
       "babel-register"
